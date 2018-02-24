@@ -5,7 +5,7 @@
 - all your data in ZFS on your home server
 - continuous snapshot routines of your volumes (e.g. with [zfs-auto-snapshot](https://github.com/zfsonlinux/zfs-auto-snapshot))
 - [optional] complete trust in your data being safe from bitrot, ransomware... because you have a good mirror/send-recv backup routine for your snapshots
-- ...however: *noticeable paranoia* that a file or files you deeply care about are unintentionally removed or modified by you without you noticing and you are desperately looking for a simple python script that reports exactly that information
+- ...however: *noticeable paranoia* that a file or files you deeply care about are unintentionally removed or modified by you without you noticing and you are longing for a simple python script that reports exactly that information
 
 Well...
 
