@@ -21,15 +21,15 @@ And that's how you report a zfs diff.\
 def getArgs():
   parser = argparse.ArgumentParser(description=DESCRIPTION,epilog=EPILOG)
   
-  parser.add_argument("volume",help="observed ZFS volume e.g.: 'ZPOOL/ZFSVOL'")
+  parser.add_argument("volume",nargs="+",help="observed ZFS volume(s) e.g.: 'ZPOOL/ZFSVOL'")
   parser.add_argument("-s","--snapshot",default="",dest="snapshot",help="snapshot identifier e.g.: 'zas_w-utc-'")
-  parser.add_argument("-o","--outdir",default=".",help="Report file output directory")
-  parser.add_argument("-f","--filename",nargs="?",const=" ",help="Optional filename. If set all volume diffs are written to it. If empty reports are written to stdout.")
-  parser.add_argument("--outfilesuffix",default="_zfsDiffReport.txt",help="Suffix for report text file. default: '_zfsDiffReport.txt'")
-  parser.add_argument("-p","--permissions",default="",help="Permissions for output file e.g.: 'user'")
-  parser.add_argument("-e","--exclude",action="append",help="Multiple definitions possible. Diff lines containing an exclude keyword will be omitted. e.g. '.git'")
+  parser.add_argument("-o","--outdir",default=".",help="report file output directory")
+  parser.add_argument("-f","--filename",nargs="?",const=" ",help="optional filename. If set all volume diffs are written to it. If empty reports are written to stdout.")
+  parser.add_argument("--outfilesuffix",default="_zfsDiffReport.txt",help="suffix for report text file. default: '_zfsDiffReport.txt'")
+  parser.add_argument("-p","--permissions",default="",help="permissions for output file e.g.: 'user'")
+  parser.add_argument("-e","--exclude",action="append",help="multiple definitions possible. Diff lines containing an exclude keyword will be omitted. e.g. '.git'")
   parser.add_argument("-r","--reduce",action="store_true",help="ZFS lists a file that is deleted and (re)created between snapshots with - and +. Omit those lines when the files' checksums match. And modified folder path lines too.")
-  parser.add_argument("--zfsbinary",default="zfs",help="Path to zfs binary. default: 'zfs'")
+  parser.add_argument("--zfsbinary",default="zfs",help="path to zfs binary. default: 'zfs'")
   parser.add_argument("-v","--verbose",action="store_true",help="")
   parser.add_argument("-q","--quiet",action="store_true",help="")
   
@@ -63,17 +63,28 @@ def getSortedDiffLines(snapshot1,snapshot2):
   difflines     = stdout.decode("ascii").splitlines()
 
   # sorting difflines by second column
-  # TODO split this now into a multi list, so you don't have to split it later. also multi sort it
   return sorted(difflines,key=lambda x: x.split()[1])
 
+
+def getFilteredDifflines(difflines,excludes):
+  if excludes:
+      for exclude in excludes:
+        logging.info("Exclude lines containing '{}'".format(exclude))
+      difflines = list(filter(lambda x:not any(f in x for f in excludes),difflines))
+  return difflines
+
+def getReducedDifflines(difflines):
+  # TODO reduce duplicates after checksum comparison
+  # TODO strip ZPOOL/ZFSVOL information if no -f is set
+  return difflines
 
 def writeReport(difflines,outdir,outfile,outfilesuffix,permissions):
   outpath = outdir+"/"+outfile+outfilesuffix
   logging.info("Writing to {}".format(outpath))
-  f = open(outpath,"w")
+  file = open(outpath,"w")
   for index,line in enumerate(difflines):
-    f.write("{}\n".format(line))
-  f.close()
+    file.write("{}\n".format(line))
+  file.close()
 
   if permissions != "":
     logging.debug("Setting permissions for user {}".format(permissions))
@@ -91,28 +102,31 @@ def main():
   logging.debug("TODO does user {} exist?".format(args.permissions))
   # TODO check this for all volumes before start
 
-  snapshot1,snapshot2 = getSnapshots(args.volume,args.snapshot)
+  # remove volume duplicates
+  volumes = list(set(args.volume))
 
-  difflines = getSortedDiffLines(snapshot1,snapshot2)
+  collecteddifflines = []
+  for volume in volumes:
+    snapshot1,snapshot2 = getSnapshots(volume,args.snapshot)
+  
+    difflines = getSortedDiffLines(snapshot1,snapshot2)
+    difflines = getFilteredDifflines(difflines,args.exclude)
+    if args.reduce:
+      difflines = getReducedDifflines(difflines)
 
-  if args.exclude:
-    for f in args.exclude:
-      logging.info("Exclude lines containing '{}'".format(f))
-    difflines = list(filter(lambda x:not any(f in x for f in args.exclude),difflines))
-
-  # TODO reduce duplicates after checksum comparison
-
-  # TODO start a single out instance if writing to stdout or to given filename
-  if args.filename:
-    if args.filename == " ":
-      logging.info("Reporting to stdout")
-      print("\n".join(difflines))
-    else: # TODO if volume == last
-      outfile = args.filename
+    collecteddifflines = collecteddifflines + difflines
+  
+    if args.filename:
+      if volume == volumes[-1]:
+        if args.filename == " ": # report to stdout
+          logging.info("Reporting to stdout")
+          print("\n".join(collecteddifflines))
+        else:
+          outfile = args.filename
+          writeReport(collecteddifflines,args.outdir,outfile,args.outfilesuffix,args.permissions)
+    else: # report to separate files
+      outfile = volume.replace("/","_")+"_"+snapshot1.rsplit("@",1)[1]+"-"+snapshot2.rsplit(args.snapshot,1)[1]
       writeReport(difflines,args.outdir,outfile,args.outfilesuffix,args.permissions)
-  else:
-    outfile = args.volume.replace("/","_")+"_"+snapshot1.rsplit("@",1)[1]+"-"+snapshot2.rsplit(args.snapshot,1)[1]
-    writeReport(difflines,args.outdir,outfile,args.outfilesuffix,args.permissions)
 
   logging.debug("Success")
 
