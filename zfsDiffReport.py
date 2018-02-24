@@ -70,7 +70,17 @@ def getSortedDiffLines(snapshot1,snapshot2):
   logging.info("Create zfs diff of snapshots {} and {}".format(snapshot1,snapshot2))
   process       = subprocess.Popen(["zfs diff {} {}".format(snapshot1,snapshot2)],shell=True,stdout=subprocess.PIPE)
   stdout,stderr = process.communicate()
-  difflines     = stdout
+  difflines     = stdout.decode("utf-8")
+
+  # TODO change this to proper decoding!
+  difflines = difflines.replace("\\0040"," ")
+  difflines = difflines.replace("\\0303\\0244","ä")
+  difflines = difflines.replace("\\0303\\0204","Ä")
+  difflines = difflines.replace("\\0303\\0266","ö")
+  difflines = difflines.replace("\\0303\\0226","Ö")
+  difflines = difflines.replace("\\0303\\0274","ü")
+  difflines = difflines.replace("\\0303\\0234","Ü")
+  difflines = difflines.splitlines()
 
   # sorting difflines by second column
   return sorted(difflines,key=lambda x: x.split()[1])
@@ -84,8 +94,6 @@ def getFilteredDifflines(difflines,excludes):
 
 
 def getHash(file):
-  # file = file.replace("\\0040"," ")
-  # TODO hots/Br\\0303\\0274tal Lege fails
   if Path(file).is_dir():
     return "000"
   # code from : https://stackoverflow.com/questions/3431825/generating-an-md5-checksum-of-a-file?answertab=votes#tab-top
@@ -105,7 +113,7 @@ def getReducedDifflines(difflines,stripVolumePath,mountpoint,snapshot1,snapshot2
   reduceddifflines = []
   mreduced = False
   for index,line in enumerate(difflines):
-    # TODO write reduced line file maybe
+    # TODO write separate reduced line file maybe
 
     if mreduced:
       mreduced = False
