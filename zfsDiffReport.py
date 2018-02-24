@@ -3,6 +3,8 @@
 import logging
 import argparse
 import subprocess
+import os
+from pwd import getpwnam
 
 DESCRIPTION = "\
 zfsDiffReport.py generates a report text file from the zfs diff of a given \
@@ -22,9 +24,10 @@ def getArgs():
   parser.add_argument("volume",help="observed ZFS volume e.g.: 'ZPOOL/ZFSVOL'")
   parser.add_argument("-s","--snapshot",default="",dest="snapshot",help="snapshot identifier e.g.: 'zas_w-utc-'")
   parser.add_argument("-o","--outdir",default=".",help="Report file output directory")
+  parser.add_argument("-f","--filename",nargs="?",const=" ",help="Optional filename. If set all volume diffs are written to it. If empty reports are written to stdout.")
   parser.add_argument("--outfilesuffix",default="_zfsDiffReport.txt",help="Suffix for report text file. default: '_zfsDiffReport.txt'")
-  parser.add_argument("-p","--permissions",default="",help="Permissions for output file e.g.: 'user:group'")
-  parser.add_argument("-f","--filter",action="append",help="Multiple definitions possible. Diff lines containing a filtered keyword will be omitted. e.g. '.git'")
+  parser.add_argument("-p","--permissions",default="",help="Permissions for output file e.g.: 'user'")
+  parser.add_argument("-e","--exclude",action="append",help="Multiple definitions possible. Diff lines containing an exclude keyword will be omitted. e.g. '.git'")
   parser.add_argument("-r","--reduce",action="store_true",help="ZFS lists a file that is deleted and (re)created between snapshots with - and +. Omit those lines when the files' checksums match. And modified folder path lines too.")
   parser.add_argument("--zfsbinary",default="zfs",help="Path to zfs binary. default: 'zfs'")
   parser.add_argument("-v","--verbose",action="store_true",help="")
@@ -54,7 +57,7 @@ def getSnapshots(volume,snapshotidentifier):
 
 
 def getSortedDiffLines(snapshot1,snapshot2):
-  logging.info("Creating zfs diff for snapshots {} and {}".format(snapshot1,snapshot2))
+  logging.info("Creating zfs diff of snapshots {} and {}".format(snapshot1,snapshot2))
   process       = subprocess.Popen(["zfs diff {} {}".format(snapshot1,snapshot2)],shell=True,stdout=subprocess.PIPE)
   stdout,stderr = process.communicate()
   difflines     = stdout.decode("ascii").splitlines()
@@ -63,6 +66,18 @@ def getSortedDiffLines(snapshot1,snapshot2):
   # TODO split this now into a multi list, so you don't have to split it later. also multi sort it
   return sorted(difflines,key=lambda x: x.split()[1])
 
+
+def writeReport(difflines,outdir,outfile,outfilesuffix,permissions):
+  outpath = outdir+"/"+outfile+outfilesuffix
+  logging.info("Writing to {}".format(outpath))
+  f = open(outpath,"w")
+  for index,line in enumerate(difflines):
+    f.write("{}\n".format(line))
+  f.close()
+
+  if permissions != "":
+    logging.debug("Setting permissions for user {}".format(permissions))
+    os.chown(outpath,getpwnam(permissions).pw_uid,getpwnam(permissions).pw_gid)
 
 def main():
   args = getArgs()
@@ -73,28 +88,31 @@ def main():
   logging.debug("TODO does ZFS volume {} exist?".format(args.volume))
   logging.debug("TODO does directory {}/ exist?".format(args.outdir))
   logging.debug("TODO are there enough zfs snapshots?")
+  logging.debug("TODO does user {} exist?".format(args.permissions))
+  # TODO check this for all volumes before start
 
   snapshot1,snapshot2 = getSnapshots(args.volume,args.snapshot)
 
   difflines = getSortedDiffLines(snapshot1,snapshot2)
 
-  if args.filter:
-    for f in args.filter:
-      logging.info("Applying filter '{}'".format(f))
-    difflines = list(filter(lambda x:not any(f in x for f in args.filter),difflines))
+  if args.exclude:
+    for f in args.exclude:
+      logging.info("Exclude lines containing '{}'".format(f))
+    difflines = list(filter(lambda x:not any(f in x for f in args.exclude),difflines))
 
   # TODO reduce duplicates after checksum comparison
 
-  outfile = args.volume.replace("/","_")+"_"+snapshot1.rsplit("@",1)[1]+"-"+snapshot2.rsplit(args.snapshot,1)[1]+args.outfilesuffix  
-  outpath = args.outdir+"/"+outfile
-  logging.info("Writing to {}".format(outpath))
-  f = open(outpath,"w")
-  for index,line in enumerate(difflines):
-    f.write("{}\n".format(line))
-  f.close()
-
-  if args.permissions != "":
-    subprocess.run(["chown {} {}".format(args.permissions,outpath)],shell=True)
+  # TODO start a single out instance if writing to stdout or to given filename
+  if args.filename:
+    if args.filename == " ":
+      logging.info("Reporting to stdout")
+      print("\n".join(difflines))
+    else: # TODO if volume == last
+      outfile = args.filename
+      writeReport(difflines,args.outdir,outfile,args.outfilesuffix,args.permissions)
+  else:
+    outfile = args.volume.replace("/","_")+"_"+snapshot1.rsplit("@",1)[1]+"-"+snapshot2.rsplit(args.snapshot,1)[1]
+    writeReport(difflines,args.outdir,outfile,args.outfilesuffix,args.permissions)
 
   logging.debug("Success")
 

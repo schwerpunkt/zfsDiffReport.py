@@ -22,40 +22,43 @@ And that's how I think you will never lose any data.
 ## Usage:
 
 ```
-./zfsDiffReport.py ZPOOL/ZFSVOL -q -s zas_w-utc -p user:user -f /.git -f /somethingelse -h                                                                                   
-usage: zfsDiffReport.py [-h] [-s SNAPSHOT] [-o OUTDIR]                                                                                                                                                             
-                        [--outfilesuffix OUTFILESUFFIX] [-p PERMISSIONS]                                                                                                                                           
-                        [-f FILTER] [-r] [--zfsbinary ZFSBINARY] [-v] [-q]                                                                                                                                         
-                        volume                                                                                                                                                                                     
-                                                                                                                                                                                                                   
-zfsDiffReport.py generates a report text file from the zfs diff of a given                                                                                                                                         
-volume's two last snapshots containing a given identifier.The script is                                                                                                                                            
-intended to be used as companion to zfs-auto-snapshot. I use it to check my                                                                                                                                        
-weekly snapshots for unintended file deletions.                                                                                                                                                                    
-                                                                                                                                                                                                                   
-positional arguments:                                                                                                                                                                                              
-  volume                observed ZFS volume e.g.: 'ZPOOL/ZFSVOL'                                                                                                                                                   
-                                                                                                                                                                                                                   
-optional arguments:                                                                                                                                                                                                
-  -h, --help            show this help message and exit                                                                                                                                                            
+./zfsDiffReport.py ZPOOL/ZFSVOL -q -s zas_w-utc -p user -e /.git -e /somethingelse -h                                                                                   
+usage: zfsDiffReport.py [-h] [-s SNAPSHOT] [-o OUTDIR] [-f [FILENAME]]
+                        [--outfilesuffix OUTFILESUFFIX] [-p PERMISSIONS]
+                        [-e EXCLUDE] [-r] [--zfsbinary ZFSBINARY] [-v] [-q]
+                        volume
+
+zfsDiffReport.py generates a report text file from the zfs diff of a given
+volume's two last snapshots containing a given identifier.The script is
+intended to be used as companion to zfs-auto-snapshot. I use it to check my
+weekly snapshots for unintended file deletions.
+
+positional arguments:
+  volume                observed ZFS volume e.g.: 'ZPOOL/ZFSVOL'
+
+optional arguments:
+  -h, --help            show this help message and exit
   -s SNAPSHOT, --snapshot SNAPSHOT
                         snapshot identifier e.g.: 'zas_w-utc-'
   -o OUTDIR, --outdir OUTDIR
                         Report file output directory
+  -f [FILENAME], --filename [FILENAME]
+                        Optional filename. If set all volume diffs are written
+                        to it. If empty reports are written to stdout.
   --outfilesuffix OUTFILESUFFIX
-                        Suffix for report text file.
-                        default:'_zfsDiffReport.txt'
+                        Suffix for report text file. default:
+                        '_zfsDiffReport.txt'
   -p PERMISSIONS, --permissions PERMISSIONS
-                        Permissions for output file e.g.: 'user:group'
-  -f FILTER, --filter FILTER
-                        Multiple definitions possible. Diff lines containing a
-                        filtered keyword will be omitted. e.g. '.git'
+                        Permissions for output file e.g.: 'user'
+  -e EXCLUDE, --exclude EXCLUDE
+                        Multiple definitions possible. Diff lines containing
+                        an exclude keyword will be omitted. e.g. '.git'
   -r, --reduce          ZFS lists a file that is deleted and (re)created
                         between snapshots with - and +. Omit those lines when
                         the files' checksums match. And modified folder path
                         lines too.
   --zfsbinary ZFSBINARY
-                        Path to zfs binary. default:'zfs'
+                        Path to zfs binary. default: 'zfs'
   -v, --verbose
   -q, --quiet
 
