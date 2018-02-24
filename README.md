@@ -22,7 +22,7 @@ And that's how I think you will never lose any data.
 ## Usage:
 
 ```
-./zfsDiffReport.py ZPOOL/ZFSVOL -v -s zas_w-utc -p user:user -f /.git -f /somethingelse -h                                                                                   
+./zfsDiffReport.py ZPOOL/ZFSVOL -q -s zas_w-utc -p user:user -f /.git -f /somethingelse -h                                                                                   
 usage: zfsDiffReport.py [-h] [-s SNAPSHOT] [-o OUTDIR]                                                                                                                                                             
                         [--outfilesuffix OUTFILESUFFIX] [-p PERMISSIONS]                                                                                                                                           
                         [-f FILTER] [-r] [--zfsbinary ZFSBINARY] [-v] [-q]                                                                                                                                         
