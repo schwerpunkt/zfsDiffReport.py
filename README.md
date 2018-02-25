@@ -22,11 +22,10 @@ And that's how I think you will never lose any data.
 ## Usage:
 
 ```
-./zfsDiffReport.py ZPOOL/ZFSVOL -q -s zas_w-utc -p user -e /.git -e somethingelse -h                                                                                   
+./zfsDiffReport.py ZPOOL/ZFSVOL -q -s zas_w-utc -u user -e /.git -e somethingelse -h                                                                                   
 usage: zfsDiffReport.py [-h] [-s SNAPSHOT] [-o OUTDIR] [-f [FILENAME]]
-                        [--outfilesuffix OUTFILESUFFIX] [-p PERMISSIONS]
-                        [-e EXCLUDE] [-r] [--zfsbinary ZFSBINARY] [--debug]
-                        [-q]
+                        [--outfilesuffix OUTFILESUFFIX] [-u USER] [-e EXCLUDE]
+                        [-r] [--zfsbinary ZFSBINARY] [--debug] [-q]
                         volume [volume ...]
 
 zfsDiffReport.py generates a report text file from the zfs diff of a given
@@ -49,8 +48,7 @@ optional arguments:
   --outfilesuffix OUTFILESUFFIX
                         suffix for report text file. default:
                         '_zfsDiffReport.txt'
-  -p PERMISSIONS, --permissions PERMISSIONS
-                        permissions for output file e.g.: 'user'
+  -u USER, --user USER  user for output file e.g.: 'user'
   -e EXCLUDE, --exclude EXCLUDE
                         multiple definitions possible. Diff lines containing
                         an exclude keyword will be omitted. e.g. '.git'

@@ -32,8 +32,8 @@ def getArgs():
     help="optional filename. If set all volume diffs are written to it. If empty reports are written to stdout.")
   parser.add_argument("--outfilesuffix",default="_zfsDiffReport.txt",
     help="suffix for report text file. default: '_zfsDiffReport.txt'")
-  parser.add_argument("-p","--permissions",
-    help="permissions for output file e.g.: 'user'")
+  parser.add_argument("-u","--user",
+    help="user for output file e.g.: 'user'")
   parser.add_argument("-e","--exclude",action="append",
     help="multiple definitions possible. Diff lines containing an exclude keyword will be omitted. e.g. '.git'")
   parser.add_argument("-r","--reduce",action="store_true",
@@ -164,16 +164,16 @@ def getReducedDifflines(difflines,stripVolumePath,mountpoint,snapshot1,snapshot2
   return reduceddifflines
 
 
-def writeReport(difflines,outdir,outfile,outfilesuffix,permissions):
+def writeReport(difflines,outdir,outfile,outfilesuffix,user):
   outpath = outdir+"/"+outfile+outfilesuffix
   logging.info("Write to {}".format(outpath))
   file = open(outpath,"w")
   file.write("\n".join(difflines))
   file.close()
 
-  if permissions:
-    logging.debug("Setting permissions for user {}".format(permissions))
-    os.chown(outpath,getpwnam(permissions).pw_uid,getpwnam(permissions).pw_gid)
+  if user:
+    logging.debug("Setting user for user {}".format(user))
+    os.chown(outpath,getpwnam(user).pw_uid,getpwnam(user).pw_gid)
 
 
 def main():
@@ -182,8 +182,8 @@ def main():
 
   # args check
   try:
-    if args.permissions :
-      getpwnam(args.permissions)
+    if args.user :
+      getpwnam(args.user)
   except KeyError:
     logging.critical("ERROR: Given user does not exist")
     return
@@ -222,14 +222,14 @@ def main():
           print("\n".join(collecteddifflines))
         else:
           outfile = args.filename
-          writeReport(collecteddifflines,args.outdir,outfile,args.outfilesuffix,args.permissions)
+          writeReport(collecteddifflines,args.outdir,outfile,args.outfilesuffix,args.user)
     else: # report to separate files
       outfile = volume.replace("/","_")+"_"+snapshot1.rsplit("@",1)[1]
       if args.snapshot:
         outfile = outfile+"-"+snapshot2.rsplit(args.snapshot,1)[1]
       else:
         outfile = outfile+"-"+snapshot2.rsplit("@",1)[1]
-      writeReport(difflines,args.outdir,outfile,args.outfilesuffix,args.permissions)
+      writeReport(difflines,args.outdir,outfile,args.outfilesuffix,args.user)
 
   if errors == 0:
     logging.debug("Success")
