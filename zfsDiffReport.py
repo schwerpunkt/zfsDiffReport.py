@@ -184,6 +184,7 @@ def main():
   for volume in volumes:
     mountpoint = "/{}".format(volume) # TODO get actual mountpoint
     snapshot1,snapshot2 = getSnapshots(volume,args.snapshot)
+    logging.debug("snapshots {} {}".format(snapshot1,snapshot2))
   
     difflines = getSortedDiffLines(snapshot1,snapshot2)
     difflines = getFilteredDifflines(difflines,args.exclude)
@@ -202,7 +203,11 @@ def main():
           outfile = args.filename
           writeReport(collecteddifflines,args.outdir,outfile,args.outfilesuffix,args.permissions)
     else: # report to separate files
-      outfile = volume.replace("/","_")+"_"+snapshot1.rsplit("@",1)[1]+"-"+snapshot2.rsplit(args.snapshot,1)[1]
+      outfile = volume.replace("/","_")+"_"+snapshot1.rsplit("@",1)[1]
+      if args.snapshot:
+        outfile = outfile+"-"+snapshot2.rsplit(args.snapshot,1)[1]
+      else:
+        outfile = outfile+"-"+snapshot2.rsplit("@",1)[1]
       writeReport(difflines,args.outdir,outfile,args.outfilesuffix,args.permissions)
 
   logging.debug("Success")
