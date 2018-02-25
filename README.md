@@ -22,10 +22,11 @@ And that's how I think you will never lose any data.
 ## Usage:
 
 ```
-./zfsDiffReport.py ZPOOL/ZFSVOL -q -s zas_w-utc -p user -e /.git -e /somethingelse -h                                                                                   
+./zfsDiffReport.py ZPOOL/ZFSVOL -q -s zas_w-utc -p user -e /.git -e somethingelse -h                                                                                   
 usage: zfsDiffReport.py [-h] [-s SNAPSHOT] [-o OUTDIR] [-f [FILENAME]]
                         [--outfilesuffix OUTFILESUFFIX] [-p PERMISSIONS]
-                        [-e EXCLUDE] [-r] [--zfsbinary ZFSBINARY] [-v] [-q]
+                        [-e EXCLUDE] [-r] [--zfsbinary ZFSBINARY] [--debug]
+                        [-q]
                         volume [volume ...]
 
 zfsDiffReport.py generates a report text file from the zfs diff of a given
@@ -59,7 +60,7 @@ optional arguments:
                         lines too.
   --zfsbinary ZFSBINARY
                         path to zfs binary. default: 'zfs'
-  -v, --verbose
+  --debug
   -q, --quiet
 
 And that's how you report a zfs diff.

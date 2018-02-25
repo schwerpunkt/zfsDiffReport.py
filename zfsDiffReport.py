@@ -40,13 +40,13 @@ def getArgs():
     help="ZFS lists a file that is deleted and (re)created between snapshots with - and +. Omit those lines when the files' checksums match. And modified folder path lines too.")
   parser.add_argument("--zfsbinary",default="zfs",
     help="path to zfs binary. default: 'zfs'")
-  parser.add_argument("-v","--verbose",action="store_true")
+  parser.add_argument("--debug",action="store_true")
   parser.add_argument("-q","--quiet",action="store_true")
   return parser.parse_args()
 
 
 def handleLogging(args):
-  if args.verbose:
+  if args.debug:
     logging.basicConfig(level=logging.DEBUG,format="%(levelname)-8s %(asctime)-15s %(message)s")
   elif args.quiet:
     logging.basicConfig(level=logging.CRITICAL,format="%(levelname)-8s %(message)s")
@@ -63,7 +63,12 @@ def getSnapshots(volume,snapshotidentifier):
   if snapshotidentifier != "":
     logging.debug("Filter snapshots for {}".format(snapshotidentifier))
     zfssnapshots = list(filter(lambda x:snapshotidentifier in x, zfssnapshots))
-  return zfssnapshots[-2],zfssnapshots[-1]
+
+  enoughSnapshots = True if len(zfssnapshots) > 1  else False
+  snapshot1 = zfssnapshots[-2] if enoughSnapshots else ""
+  snapshot2 = zfssnapshots[-1] if enoughSnapshots else ""
+
+  return enoughSnapshots,snapshot1,snapshot2
 
 
 def getSortedDiffLines(snapshot1,snapshot2):
@@ -173,7 +178,6 @@ def main():
   logging.debug("TODO am I root (zfs/permissionschange)")
   logging.debug("TODO does ZFS volume {} exist?".format(args.volume))
   logging.debug("TODO does directory {}/ exist?".format(args.outdir))
-  logging.debug("TODO are there enough zfs snapshots?")
   logging.debug("TODO does user {} exist?".format(args.permissions))
   # TODO check this for all volumes before start
 
@@ -181,10 +185,14 @@ def main():
   volumes = list(set(args.volume))
 
   collecteddifflines = []
+  errors = 0
   for volume in volumes:
     mountpoint = "/{}".format(volume) # TODO get actual mountpoint
-    snapshot1,snapshot2 = getSnapshots(volume,args.snapshot)
-    logging.debug("snapshots {} {}".format(snapshot1,snapshot2))
+    getSnapshotsSuccess,snapshot1,snapshot2 = getSnapshots(volume,args.snapshot)
+    if not getSnapshotsSuccess:
+      logging.critical("ERROR: Not enough snapshots in volume {}{}".format(volume," for snapshot identifier {}".format(args.snapshot) if args.snapshot else ""))
+      errors += 1
+      continue
   
     difflines = getSortedDiffLines(snapshot1,snapshot2)
     difflines = getFilteredDifflines(difflines,args.exclude)
@@ -210,7 +218,10 @@ def main():
         outfile = outfile+"-"+snapshot2.rsplit("@",1)[1]
       writeReport(difflines,args.outdir,outfile,args.outfilesuffix,args.permissions)
 
-  logging.debug("Success")
+  if errors == 0:
+    logging.debug("Success")
+  else:
+    logging.warning("Warning: {}/{} volumes were reported. Check errors.".format(len(volumes)-errors,len(volumes)))
 
 if __name__ == "__main__":
   try:
