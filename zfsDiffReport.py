@@ -139,9 +139,9 @@ def getReducedDifflines(difflines,stripVolumePath,mountpoint,snapshot1,snapshot2
         logging.debug("Reducing line {}".format(line))
         continue
 
-    elif line.startswith("-") \
-         and index+1 < len(difflines) \
-         and difflines[index+1].startswith("+"):
+    elif index+1 < len(difflines) and\
+         ((line.startswith("-") and difflines[index+1].startswith("+"))
+          or (line.startswith("+") and difflines[index+1].startswith("-"))):
       mfile = line.split("{}".format(mountpoint))[1]
       pfile = difflines[index+1].split("{}".format(mountpoint))[1]
       if mfile == pfile:
