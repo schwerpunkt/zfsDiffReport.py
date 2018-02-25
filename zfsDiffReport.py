@@ -79,7 +79,7 @@ def getSortedDiffLines(snapshot1,snapshot2):
   stdout,stderr = process.communicate()
   difflines     = stdout.decode("utf-8")
 
-  # TODO change this to proper decoding!
+  # TODO change this to proper decoding! https://unix.stackexchange.com/questions/216312/convert-an-ascii-file-with-octal-escapes-for-utf-8-codes-to-utf-8
   difflines = difflines.replace("\\0040"," ")
   difflines = difflines.replace("\\0303\\0244","ä")
   difflines = difflines.replace("\\0303\\0204","Ä")
@@ -103,7 +103,9 @@ def getFilteredDifflines(difflines,excludes):
 
 def getHash(file):
   if Path(file).is_dir():
-    return "000"
+    return ""
+  if not Path(file).is_file():
+    return ""
   # code from : https://stackoverflow.com/questions/3431825/generating-an-md5-checksum-of-a-file?answertab=votes#tab-top
   hash_alg = hashlib.sha1()
   with open(file,"rb") as f:
