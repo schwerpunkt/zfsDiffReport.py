@@ -32,7 +32,7 @@ def getArgs():
     help="optional filename. If set all volume diffs are written to it. If empty reports are written to stdout.")
   parser.add_argument("--outfilesuffix",default="_zfsDiffReport.txt",
     help="suffix for report text file. default: '_zfsDiffReport.txt'")
-  parser.add_argument("-p","--permissions",default="",
+  parser.add_argument("-p","--permissions",
     help="permissions for output file e.g.: 'user'")
   parser.add_argument("-e","--exclude",action="append",
     help="multiple definitions possible. Diff lines containing an exclude keyword will be omitted. e.g. '.git'")
@@ -169,7 +169,7 @@ def writeReport(difflines,outdir,outfile,outfilesuffix,permissions):
   file.write("\n".join(difflines))
   file.close()
 
-  if permissions != "":
+  if permissions:
     logging.debug("Setting permissions for user {}".format(permissions))
     os.chown(outpath,getpwnam(permissions).pw_uid,getpwnam(permissions).pw_gid)
 
@@ -178,15 +178,20 @@ def main():
   args = getArgs()
   handleLogging(args)
 
-  logging.debug("TODO does user {} exist?".format(args.permissions))
-  # TODO check this for all volumes before start
+  # args check
+  try:
+    if args.permissions :
+      getpwnam(args.permissions)
+  except KeyError:
+    logging.critical("ERROR: Given user does not exist")
+    return
 
   if os.geteuid() != 0:
     logging.warning("Warning: Root privileges are expected.")
 
   if not Path(args.outdir).is_dir():
     logging.critical("ERROR: Output directory does not exist.")
-    return -1
+    return
 
   # remove volume duplicates
   volumes = list(set(args.volume))
