@@ -24,8 +24,8 @@ def getArgs():
   parser = argparse.ArgumentParser(description=DESCRIPTION,epilog=EPILOG)
   parser.add_argument("volume",nargs="+",
     help="observed ZFS volume(s) e.g.: 'ZPOOL/ZFSVOL'")
-  parser.add_argument("-s","--snapshot",default="",dest="snapshot",
-    help="snapshot identifier e.g.: 'zas_w-utc-'")
+  parser.add_argument("-s","--snapshotkeyword",default="",
+    help="snapshot keyword e.g.: 'zas_w-utc-'")
   parser.add_argument("-o","--outdir",default=".",
     help="report file output directory")
   parser.add_argument("-f","--filename",nargs="?",const=" ",
@@ -54,21 +54,21 @@ def handleLogging(args):
     logging.basicConfig(level=logging.INFO,format="%(message)s")
 
 
-def getSnapshots(volume,snapshotidentifier):
+def getSnapshots(volume,snapshotkeyword):
   logging.info("Get snapshot list for {}".format(volume))
   process       = subprocess.Popen(["zfs list -t snapshot -o name -s creation -r {}".format(volume)],shell=True,stdout=subprocess.PIPE)
   stdout,stderr = process.communicate()
   zfssnapshots  = stdout.decode("utf-8").splitlines()
 
-  if snapshotidentifier != "":
-    logging.debug("Filter snapshots for {}".format(snapshotidentifier))
-    zfssnapshots = list(filter(lambda x:snapshotidentifier in x, zfssnapshots))
+  if snapshotkeyword != "":
+    logging.debug("Filter snapshots for {}".format(snapshotkeyword))
+    zfssnapshots = list(filter(lambda x:snapshotkeyword in x, zfssnapshots))
 
   enoughSnapshots = True if len(zfssnapshots) > 1  else False
   snapshot1 = zfssnapshots[-2] if enoughSnapshots else ""
   snapshot2 = zfssnapshots[-1] if enoughSnapshots else ""
   if not enoughSnapshots:
-    logging.critical("ERROR: Not enough snapshots in volume {}{}".format(volume," for snapshot identifier {}".format(snapshotidentifier) if snapshotidentifier else ""))
+    logging.critical("ERROR: Not enough snapshots in volume {}{}".format(volume," for snapshot identifier {}".format(snapshotkeyword) if snapshotkeyword else ""))
 
   return enoughSnapshots,snapshot1,snapshot2
 
@@ -202,7 +202,7 @@ def main():
   errors = 0
   for volume in volumes:
     mountpoint = "/{}".format(volume) # TODO get actual mountpoint
-    getSnapshotsSuccess,snapshot1,snapshot2 = getSnapshots(volume,args.snapshot)
+    getSnapshotsSuccess,snapshot1,snapshot2 = getSnapshots(volume,args.snapshotkeyword)
     if not getSnapshotsSuccess:
       errors += 1
       continue
@@ -225,8 +225,8 @@ def main():
           writeReport(collecteddifflines,args.outdir,outfile,args.outfilesuffix,args.user)
     else: # report to separate files
       outfile = volume.replace("/","_")+"_"+snapshot1.rsplit("@",1)[1]
-      if args.snapshot:
-        outfile = outfile+"-"+snapshot2.rsplit(args.snapshot,1)[1]
+      if args.snapshotkeyword:
+        outfile = outfile+"-"+snapshot2.rsplit(args.snapshotkeyword,1)[1]
       else:
         outfile = outfile+"-"+snapshot2.rsplit("@",1)[1]
       writeReport(difflines,args.outdir,outfile,args.outfilesuffix,args.user)

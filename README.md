@@ -23,7 +23,7 @@ And that's how I think you will never lose any data.
 
 ```
 ./zfsDiffReport.py ZPOOL/ZFSVOL -q -s zas_w-utc -u user -e /.git -e somethingelse -h                                                                                   
-usage: zfsDiffReport.py [-h] [-s SNAPSHOT] [-o OUTDIR] [-f [FILENAME]]
+usage: zfsDiffReport.py [-h] [-s SNAPSHOTKEYWORD] [-o OUTDIR] [-f [FILENAME]]
                         [--outfilesuffix OUTFILESUFFIX] [-u USER] [-e EXCLUDE]
                         [-r] [--zfsbinary ZFSBINARY] [--debug] [-q]
                         volume [volume ...]
@@ -38,8 +38,8 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -s SNAPSHOT, --snapshot SNAPSHOT
-                        snapshot identifier e.g.: 'zas_w-utc-'
+  -s SNAPSHOTKEYWORD, --snapshotkeyword SNAPSHOTKEYWORD
+                        snapshot keyword e.g.: 'zas_w-utc-'
   -o OUTDIR, --outdir OUTDIR
                         report file output directory
   -f [FILENAME], --filename [FILENAME]
