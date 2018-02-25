@@ -156,6 +156,7 @@ def getReducedDifflines(difflines,stripVolumePath,mountpoint,snapshot1,snapshot2
 
     if stripVolumePath:
       line = line.replace(mountpoint,"",1)
+      line = line.replace(" -> {}".format(mountpoint)," -> ",1)
 
     line = " ".join(line.split())
 
