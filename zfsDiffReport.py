@@ -8,17 +8,17 @@ from pwd import getpwnam
 import hashlib
 from pathlib import Path
 
-DESCRIPTION = "\
-zfsDiffReport.py generates a report text file from the zfs diff of a given \
-volume's two last snapshots containing a given identifier.\
-\
-The script is intended to be used as companion to zfs-auto-snapshot. \
-I use it to check my weekly snapshots for unintended file deletions.\
-"
+DESCRIPTION = """
+zfsDiffReport.py generates a report text file from the zfs diff of a given
+volume's two last snapshots containing a given identifier.
 
-EPILOG = "\
-And that's how you report a zfs diff.\
-"
+The script is intended to be used as companion to zfs-auto-snapshot.
+I use it to check my weekly snapshots for unintended file deletions.
+"""
+
+EPILOG = """
+And that's how you report a zfs diff.
+"""
 
 def getArgs():
   parser = argparse.ArgumentParser(description=DESCRIPTION,epilog=EPILOG)
@@ -29,7 +29,7 @@ def getArgs():
   parser.add_argument("-o","--outdir",default=".",
     help="report file output directory")
   parser.add_argument("-f","--filename",nargs="?",const=" ",
-    help="optional filename. If set all volume diffs are written to it. If empty reports are written to stdout.")
+    help="if set all volume diffs are written to it, if empty all reports are written to stdout, if not set one report per volume is created")
   parser.add_argument("--outfilesuffix",default="_zfsDiffReport.txt",
     help="suffix for report text file. default: '_zfsDiffReport.txt'")
   parser.add_argument("-u","--user",
@@ -155,8 +155,8 @@ def getReducedDifflines(difflines,stripVolumePath,mountpoint,snapshot1,snapshot2
           continue
 
     if stripVolumePath:
-      line = line.replace(mountpoint,"",1)
-      line = line.replace(" -> {}".format(mountpoint)," -> ",1)
+      line = line.replace(mountpoint,"",1)                      # strip mountpoint from paths
+      line = line.replace(" -> {}".format(mountpoint)," -> ",1) # strip for zfs renames R
 
     line = " ".join(line.split())
 
