@@ -178,12 +178,15 @@ def main():
   args = getArgs()
   handleLogging(args)
 
-  logging.debug("TODO does directory {}/ exist?".format(args.outdir))
   logging.debug("TODO does user {} exist?".format(args.permissions))
   # TODO check this for all volumes before start
 
   if os.geteuid() != 0:
     logging.warning("Warning: Root privileges are expected.")
+
+  if not Path(args.outdir).is_dir():
+    logging.critical("ERROR: Output directory does not exist.")
+    return -1
 
   # remove volume duplicates
   volumes = list(set(args.volume))
