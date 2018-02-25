@@ -67,6 +67,8 @@ def getSnapshots(volume,snapshotidentifier):
   enoughSnapshots = True if len(zfssnapshots) > 1  else False
   snapshot1 = zfssnapshots[-2] if enoughSnapshots else ""
   snapshot2 = zfssnapshots[-1] if enoughSnapshots else ""
+  if not enoughSnapshots:
+    logging.critical("ERROR: Not enough snapshots in volume {}{}".format(volume," for snapshot identifier {}".format(snapshotidentifier) if snapshotidentifier else ""))
 
   return enoughSnapshots,snapshot1,snapshot2
 
@@ -85,6 +87,7 @@ def getSortedDiffLines(snapshot1,snapshot2):
   difflines = difflines.replace("\\0303\\0226","Ö")
   difflines = difflines.replace("\\0303\\0274","ü")
   difflines = difflines.replace("\\0303\\0234","Ü")
+  
   difflines = difflines.splitlines()
 
   # sorting difflines by second column
@@ -175,11 +178,12 @@ def main():
   args = getArgs()
   handleLogging(args)
 
-  logging.debug("TODO am I root (zfs/permissionschange)")
-  logging.debug("TODO does ZFS volume {} exist?".format(args.volume))
   logging.debug("TODO does directory {}/ exist?".format(args.outdir))
   logging.debug("TODO does user {} exist?".format(args.permissions))
   # TODO check this for all volumes before start
+
+  if os.geteuid() != 0:
+    logging.warning("Warning: Root privileges are expected.")
 
   # remove volume duplicates
   volumes = list(set(args.volume))
@@ -190,7 +194,6 @@ def main():
     mountpoint = "/{}".format(volume) # TODO get actual mountpoint
     getSnapshotsSuccess,snapshot1,snapshot2 = getSnapshots(volume,args.snapshot)
     if not getSnapshotsSuccess:
-      logging.critical("ERROR: Not enough snapshots in volume {}{}".format(volume," for snapshot identifier {}".format(args.snapshot) if args.snapshot else ""))
       errors += 1
       continue
   
