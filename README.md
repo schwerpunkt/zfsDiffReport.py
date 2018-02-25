@@ -21,7 +21,7 @@ And that's how I think you will never lose any data.
 
 ## Usage:
 
-```sh
+```
 ./zfsDiffReport.py ZPOOL/ZFSVOL -q -s zas_w-utc -u user -e /.git -e somethingelse -h                                                                                   
 usage: zfsDiffReport.py [-h] [-s SNAPSHOTKEYWORD] [-o OUTDIR] [-f [FILENAME]]
                         [--outfilesuffix OUTFILESUFFIX] [-u USER] [-e EXCLUDE]
