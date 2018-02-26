@@ -15,7 +15,7 @@ Well...
 
 - set up [zfs-auto-snapshot](https://github.com/zfsonlinux/zfs-auto-snapshot) for weekly snapshots with e.g. the identifier 'zas_w-utc' (actually do it more frequently... something reasonable... four times an hour or so)
 - set up a weekly cronjob and call zfsDiffReport like in the usage below (without -h)
-- now, once every week, good time is a monday, when you read your morning paper in your left hand, hold the spoon for your cereal in your right, and scroll down your phone with your nose, you might as well click on the *\*_zfsDiffReport.txt* file on your server and check the short list of changes you intentionally or accidentally made during the previous week
+- now, once every week, good time is a Monday, when you read your morning paper in your left hand, hold the spoon for your cereal in your right, and scroll down your phone with your nose, you might as well click on the *\*_zfsDiffReport.txt* file on your server and check the short list of changes you intentionally or accidentally made during the previous week
 
 And that's how I think you will never lose any data.
 
@@ -28,7 +28,7 @@ usage: zfsDiffReport.py [-h] [-s SNAPSHOTKEYWORD] [-o OUTDIR] [-f [FILENAME]]
                         [-r] [--zfsbinary ZFSBINARY] [--debug] [-q]
                         volume [volume ...]
 
-zfsDiffReport.py generates a report text file from the zfs diff of a given
+zfsDiffReport.py generates a report text file from the ZFS diff of a given
 volume's two last snapshots containing a given identifier. The script is
 intended to be used as companion to zfs-auto-snapshot. I use it to check my
 weekly snapshots for unintended file deletions.
@@ -58,9 +58,9 @@ optional arguments:
                         between snapshots with - and +; omit those lines when
                         the files' checksums match
   --zfsbinary ZFSBINARY
-                        path to zfs binary; default: 'zfs'
+                        path to ZFS binary; default: 'zfs'
   --debug
   -q, --quiet
 
-And that's how you report a zfs diff.
+And that's how you report a ZFS diff.
 ```

@@ -9,7 +9,7 @@ import hashlib
 from pathlib import Path
 
 DESCRIPTION = """
-zfsDiffReport.py generates a report text file from the zfs diff of a given
+zfsDiffReport.py generates a report text file from the ZFS diff of a given
 volume's two last snapshots containing a given identifier.
 
 The script is intended to be used as companion to zfs-auto-snapshot.
@@ -17,7 +17,7 @@ I use it to check my weekly snapshots for unintended file deletions.
 """
 
 EPILOG = """
-And that's how you report a zfs diff.
+And that's how you report a ZFS diff.
 """
 
 def getArgs():
@@ -39,7 +39,7 @@ def getArgs():
   parser.add_argument("-r","--reduce",action="store_true",
     help="ZFS lists a file that is deleted and (re)created between snapshots with - and +; omit those lines when the files' checksums match")
   parser.add_argument("--zfsbinary",default="zfs",
-    help="path to zfs binary; default: 'zfs'")
+    help="path to ZFS binary; default: 'zfs'")
   parser.add_argument("--debug",action="store_true")
   parser.add_argument("-q","--quiet",action="store_true")
   return parser.parse_args()
