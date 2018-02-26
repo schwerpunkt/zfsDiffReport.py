@@ -29,7 +29,7 @@ usage: zfsDiffReport.py [-h] [-s SNAPSHOTKEYWORD] [-o OUTDIR] [-f [FILENAME]]
                         volume [volume ...]
 
 zfsDiffReport.py generates a report text file from the zfs diff of a given
-volume's two last snapshots containing a given identifier.The script is
+volume's two last snapshots containing a given identifier. The script is
 intended to be used as companion to zfs-auto-snapshot. I use it to check my
 weekly snapshots for unintended file deletions.
 
@@ -43,21 +43,22 @@ optional arguments:
   -o OUTDIR, --outdir OUTDIR
                         report file output directory
   -f [FILENAME], --filename [FILENAME]
-                        optional filename. If set all volume diffs are written
-                        to it. If empty reports are written to stdout.
+                        if not set each volume diff is written to a separate
+                        file. if set all volume diffs are written to it, if
+                        empty all reports are written to stdout, if not set
+                        one report per volume is created
   --outfilesuffix OUTFILESUFFIX
-                        suffix for report text file. default:
+                        suffix for report text file; default:
                         '_zfsDiffReport.txt'
   -u USER, --user USER  user for output file e.g.: 'user'
   -e EXCLUDE, --exclude EXCLUDE
-                        multiple definitions possible. Diff lines containing
-                        an exclude keyword will be omitted. e.g. '.git'
+                        multiple definitions possible; diff lines containing
+                        an exclude keyword will be omitted e.g. '.git'
   -r, --reduce          ZFS lists a file that is deleted and (re)created
-                        between snapshots with - and +. Omit those lines when
-                        the files' checksums match. And modified folder path
-                        lines too.
+                        between snapshots with - and +; omit those lines when
+                        the files' checksums match
   --zfsbinary ZFSBINARY
-                        path to zfs binary. default: 'zfs'
+                        path to zfs binary; default: 'zfs'
   --debug
   -q, --quiet
 

@@ -29,17 +29,17 @@ def getArgs():
   parser.add_argument("-o","--outdir",default=".",
     help="report file output directory")
   parser.add_argument("-f","--filename",nargs="?",const=" ",
-    help="if set all volume diffs are written to it, if empty all reports are written to stdout, if not set one report per volume is created")
+    help="if not set each volume diff is written to a separate file. if set all volume diffs are written to it, if empty all reports are written to stdout, if not set one report per volume is created")
   parser.add_argument("--outfilesuffix",default="_zfsDiffReport.txt",
-    help="suffix for report text file. default: '_zfsDiffReport.txt'")
+    help="suffix for report text file; default: '_zfsDiffReport.txt'")
   parser.add_argument("-u","--user",
     help="user for output file e.g.: 'user'")
   parser.add_argument("-e","--exclude",action="append",
-    help="multiple definitions possible. Diff lines containing an exclude keyword will be omitted. e.g. '.git'")
+    help="multiple definitions possible; diff lines containing an exclude keyword will be omitted e.g. '.git'")
   parser.add_argument("-r","--reduce",action="store_true",
-    help="ZFS lists a file that is deleted and (re)created between snapshots with - and +. Omit those lines when the files' checksums match. And modified folder path lines too.")
+    help="ZFS lists a file that is deleted and (re)created between snapshots with - and +; omit those lines when the files' checksums match")
   parser.add_argument("--zfsbinary",default="zfs",
-    help="path to zfs binary. default: 'zfs'")
+    help="path to zfs binary; default: 'zfs'")
   parser.add_argument("--debug",action="store_true")
   parser.add_argument("-q","--quiet",action="store_true")
   return parser.parse_args()
