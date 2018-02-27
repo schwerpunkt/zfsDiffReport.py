@@ -69,32 +69,32 @@ def handleLogging(args):
 def getSnapshots(volume, snapshotkeyword):
     logging.info("Get snapshot list for {}".format(volume))
     process = subprocess.Popen(
-      ["zfs list -t snapshot -o name -s creation -r {}".format(volume)],
-      shell=True, stdout=subprocess.PIPE)
+        ["zfs list -t snapshot -o name -s creation -r {}".format(volume)],
+        shell=True, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
     zfssnapshots = stdout.decode("utf-8").splitlines()
 
     if snapshotkeyword != "":
         logging.debug("Filter snapshots for {}".format(snapshotkeyword))
         zfssnapshots = list(
-          filter(lambda x: snapshotkeyword in x, zfssnapshots))
+            filter(lambda x: snapshotkeyword in x, zfssnapshots))
 
     enoughSnapshots = True if len(zfssnapshots) > 1 else False
     snapshot1 = zfssnapshots[-2] if enoughSnapshots else ""
     snapshot2 = zfssnapshots[-1] if enoughSnapshots else ""
     if not enoughSnapshots:
         logging.critical("ERROR: Not enough snapshots in volume {}{}".format(
-          volume, " for snapshot identifier {}".format(snapshotkeyword)
-                  if snapshotkeyword else ""))
+            volume, " for snapshot identifier {}".format(snapshotkeyword)
+                    if snapshotkeyword else ""))
 
     return enoughSnapshots, snapshot1, snapshot2
 
 
 def getSortedDiffLines(snapshot1, snapshot2):
     logging.info("Create zfs diff of snapshots {} and {}".format(
-      snapshot1, snapshot2))
+        snapshot1, snapshot2))
     process = subprocess.Popen(["zfs diff {} {}".format(
-      snapshot1, snapshot2)], shell=True, stdout=subprocess.PIPE)
+        snapshot1, snapshot2)], shell=True, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
     difflines = stdout.decode("utf-8")
 
@@ -117,9 +117,9 @@ def getSortedDiffLines(snapshot1, snapshot2):
 def getFilteredDifflines(difflines, excludes):
     if excludes:
             logging.info("Exclude lines containing '{}'".format(
-              " or ".join(excludes)))
+                " or ".join(excludes)))
             difflines = list(filter(
-              lambda x: not any(f in x for f in excludes), difflines))
+                lambda x: not any(f in x for f in excludes), difflines))
     return difflines
 
 
@@ -147,7 +147,7 @@ def getReducedDifflines(
     snapshot2 = mountpoint+zfsstructure+snapshot2.split("@")[1]
     logging.debug("Reduce lines after hashing some files from \
                   {} and {}. stripVolumePath {}".format(
-                    snapshot1, snapshot2, stripVolumePath))
+                      snapshot1, snapshot2, stripVolumePath))
 
     reduceddifflines = []
     mreduced = False
