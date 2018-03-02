@@ -82,28 +82,33 @@ def getSnapshots(volume, snapshotkeys):
 
     tmpZfsSnapshots = zfssnapshots
     if len(snapshotkeys) > 0:
-        logging.debug("Filter latest snapshots containing {}".format(snapshotkeys[0][0]))
+        logging.debug("Filter latest snapshots containing {}".format(
+            snapshotkeys[0][0]))
         tmpZfsSnapshots = list(
             filter(lambda x: snapshotkeys[0][0] in x, zfssnapshots))
     # if two keys are given, filter by second key excluding the previous result
     # and push latest from previous filtering to the end
     # (they will be sorted chronologically later)
     if len(snapshotkeys) > 1 and len(tmpZfsSnapshots) > 0:
-        logging.debug("Filter latest snapshots containing {}".format(snapshotkeys[1][0]))
+        logging.debug("Filter latest snapshots containing {}".format(
+            snapshotkeys[1][0]))
         tmpZfsSnapshots = list(
-            filter(lambda x: snapshotkeys[1][0] in x
-                             and not tmpZfsSnapshots[-1] in x,
-                    zfssnapshots)) + [tmpZfsSnapshots[-1]]
+            filter(lambda x: snapshotkeys[1][0] in x and
+                   not tmpZfsSnapshots[-1] in x,
+                   zfssnapshots)) + [tmpZfsSnapshots[-1]]
 
     enoughSnapshots = True if len(tmpZfsSnapshots) > 1 else False
     snapshot1 = tmpZfsSnapshots[-2] if enoughSnapshots else ""
     snapshot2 = tmpZfsSnapshots[-1] if enoughSnapshots else ""
     if not enoughSnapshots:
         logging.critical("ERROR: Not enough snapshots in volume {} \
-for given snapshot keys {}".format(volume,snapshotkeys if len(snapshotkeys) > 0 else ""))
+for given snapshot keys {}".format(volume,
+                                   snapshotkeys if len(snapshotkeys) > 0
+                                   else ""))
 
     # sort snapshots chronologically
-    if enoughSnapshots and zfssnapshots.index(snapshot1) > zfssnapshots.index(snapshot2):
+    if ((enoughSnapshots) and
+       (zfssnapshots.index(snapshot1) > zfssnapshots.index(snapshot2))):
         tmpSnapshot = snapshot2
         snapshot2 = snapshot1
         snapshot1 = tmpSnapshot
@@ -299,7 +304,7 @@ def main():
                 # snapshots found with same keyword
                 outfile = outfile+"-"+snapshot2.rsplit(
                     args.snapshotkeys[0][0], 1)[1]
-            #elif 0: # TODO reduce output string length if possible
+            # elif 0: # TODO reduce output string length if possible
             #        # for when two snapshot keys are given
             else:
                 outfile = outfile+"-"+snapshot2.rsplit("@", 1)[1]
