@@ -9,7 +9,7 @@
 
 Well...
 
-*zfsDiffReport.py* is a python script that diffs the last two snapshots of a ZFS volume and prints report text files.
+*zfsDiffReport.py* is a python script that diffs the latest two snapshots of a ZFS volume and prints report text files.
 
 ## Suggested usecase:
 
