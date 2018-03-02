@@ -295,9 +295,12 @@ def main():
                         args.user)
         else:  # report to separate files
             outfile = volume.replace("/", "_")+"_"+snapshot1.rsplit("@", 1)[1]
-            if args.snapshotkeyword: # TODO fix for multiple snapshotkeys
+            if len(args.snapshotkeys) == 1:
+                # snapshots found with same keyword
                 outfile = outfile+"-"+snapshot2.rsplit(
-                    args.snapshotkeyword, 1)[1]
+                    args.snapshotkeys[0][0], 1)[1]
+            #elif 0: # TODO reduce output string length if possible
+            #        # for when two snapshot keys are given
             else:
                 outfile = outfile+"-"+snapshot2.rsplit("@", 1)[1]
             writeReport(
