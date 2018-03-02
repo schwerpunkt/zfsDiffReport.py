@@ -25,8 +25,14 @@ def getArgs():
     parser = argparse.ArgumentParser(description=DESCRIPTION, epilog=EPILOG)
     parser.add_argument("volume", nargs="+",
                         help="observed ZFS volume(s) e.g.: 'ZPOOL/ZFSVOL'")
-    parser.add_argument("-s", "--snapshotkeyword", default="",
-                        help="snapshot keyword e.g.: 'zas_w-utc-'")
+    parser.add_argument("-s", "--snapshotkeys", nargs="*", action="append",
+                        default=[],
+                        help="snapshot keywords e.g.: 'zas_w-utc-', \
+                        no keyword: diff latest snapshots, \
+                        one keyword: diff latest snapshots containing \
+                        the keyword, two keywords: diff latest \
+                        snapshots each containing given keywords \
+                        respectively")
     parser.add_argument("-o", "--outdir", default=".",
                         help="report file output directory")
     parser.add_argument("-f", "--filename", nargs="?", const=" ",
@@ -66,7 +72,7 @@ def handleLogging(args):
         logging.basicConfig(level=logging.INFO, format=FORMAT)
 
 
-def getSnapshots(volume, snapshotkeyword):
+def getSnapshots(volume, snapshotkeys):
     logging.info("Get snapshot list for {}".format(volume))
     process = subprocess.Popen(
         ["zfs list -t snapshot -o name -s creation -r {}".format(volume)],
@@ -74,18 +80,33 @@ def getSnapshots(volume, snapshotkeyword):
     stdout, stderr = process.communicate()
     zfssnapshots = stdout.decode("utf-8").splitlines()
 
-    if snapshotkeyword != "":
-        logging.debug("Filter snapshots for {}".format(snapshotkeyword))
-        zfssnapshots = list(
-            filter(lambda x: snapshotkeyword in x, zfssnapshots))
+    tmpZfsSnapshots = zfssnapshots
+    if len(snapshotkeys) > 0:
+        logging.debug("Filter latest snapshots containing {}".format(snapshotkeys[0][0]))
+        tmpZfsSnapshots = list(
+            filter(lambda x: snapshotkeys[0][0] in x, zfssnapshots))
+    # if two keys are given, filter by second key excluding the previous result
+    # and push latest from previous filtering to the end
+    # (they will be sorted chronologically later)
+    if len(snapshotkeys) > 1 and len(tmpZfsSnapshots) > 0:
+        logging.debug("Filter latest snapshots containing {}".format(snapshotkeys[1][0]))
+        tmpZfsSnapshots = list(
+            filter(lambda x: snapshotkeys[1][0] in x
+                             and not tmpZfsSnapshots[-1] in x,
+                    zfssnapshots)) + [tmpZfsSnapshots[-1]]
 
-    enoughSnapshots = True if len(zfssnapshots) > 1 else False
-    snapshot1 = zfssnapshots[-2] if enoughSnapshots else ""
-    snapshot2 = zfssnapshots[-1] if enoughSnapshots else ""
+    enoughSnapshots = True if len(tmpZfsSnapshots) > 1 else False
+    snapshot1 = tmpZfsSnapshots[-2] if enoughSnapshots else ""
+    snapshot2 = tmpZfsSnapshots[-1] if enoughSnapshots else ""
     if not enoughSnapshots:
-        logging.critical("ERROR: Not enough snapshots in volume {}{}".format(
-            volume, " for snapshot identifier {}".format(snapshotkeyword)
-                    if snapshotkeyword else ""))
+        logging.critical("ERROR: Not enough snapshots in volume {} \
+for given snapshot keys {}".format(volume,snapshotkeys if len(snapshotkeys) > 0 else ""))
+
+    # sort snapshots chronologically
+    if enoughSnapshots and zfssnapshots.index(snapshot1) > zfssnapshots.index(snapshot2):
+        tmpSnapshot = snapshot2
+        snapshot2 = snapshot1
+        snapshot1 = tmpSnapshot
 
     return enoughSnapshots, snapshot1, snapshot2
 
@@ -145,8 +166,8 @@ def getReducedDifflines(
     zfsstructure = "/.zfs/snapshot/"
     snapshot1 = mountpoint+zfsstructure+snapshot1.split("@")[1]
     snapshot2 = mountpoint+zfsstructure+snapshot2.split("@")[1]
-    logging.debug("Reduce lines after hashing some files from \
-                  {} and {}. stripVolumePath {}".format(
+    logging.debug("Reduce lines after hashing files from\n\
+{} and\n{}\nstripVolumePath {}".format(
                       snapshot1, snapshot2, stripVolumePath))
 
     reduceddifflines = []
@@ -213,6 +234,10 @@ def main():
     handleLogging(args)
 
     # args check
+    if len(args.snapshotkeys) > 2:
+        logging.critical("ERROR: too many snapshotkeys given (max(-s) 2)")
+        return
+
     try:
         if args.user:
             getpwnam(args.user)
@@ -236,7 +261,7 @@ def main():
         mountpoint = "/{}".format(volume)  # TODO get actual mountpoint
         getSnapshotsSuccess, snapshot1, snapshot2 = getSnapshots(
             volume,
-            args.snapshotkeyword)
+            args.snapshotkeys)
         if not getSnapshotsSuccess:
             errors += 1
             continue
@@ -270,7 +295,7 @@ def main():
                         args.user)
         else:  # report to separate files
             outfile = volume.replace("/", "_")+"_"+snapshot1.rsplit("@", 1)[1]
-            if args.snapshotkeyword:
+            if args.snapshotkeyword: # TODO fix for multiple snapshotkeys
                 outfile = outfile+"-"+snapshot2.rsplit(
                     args.snapshotkeyword, 1)[1]
             else:
@@ -286,7 +311,7 @@ def main():
         logging.debug("Success")
     else:
         logging.warning("Warning: {}/{} volumes were reported. Check errors.\
-            ".format(len(volumes)-errors, len(volumes)))
+".format(len(volumes)-errors, len(volumes)))
 
 if __name__ == "__main__":
     try:
