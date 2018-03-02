@@ -83,17 +83,17 @@ def getSnapshots(volume, snapshotkeys):
     tmpZfsSnapshots = zfssnapshots
     if len(snapshotkeys) > 0:
         logging.debug("Filter latest snapshots containing {}".format(
-            snapshotkeys[0][0]))
+            snapshotkeys[0]))
         tmpZfsSnapshots = list(
-            filter(lambda x: snapshotkeys[0][0] in x, zfssnapshots))
+            filter(lambda x: snapshotkeys[0] in x, zfssnapshots))
     # if two keys are given, filter by second key excluding the previous result
     # and push latest from previous filtering to the end
     # (they will be sorted chronologically later)
     if len(snapshotkeys) > 1 and len(tmpZfsSnapshots) > 0:
         logging.debug("Filter latest snapshots containing {}".format(
-            snapshotkeys[1][0]))
+            snapshotkeys[1]))
         tmpZfsSnapshots = list(
-            filter(lambda x: snapshotkeys[1][0] in x and
+            filter(lambda x: snapshotkeys[1] in x and
                    not tmpZfsSnapshots[-1] in x,
                    zfssnapshots)) + [tmpZfsSnapshots[-1]]
 
@@ -238,9 +238,20 @@ def main():
     args = getArgs()
     handleLogging(args)
 
+    # convert snapshot keys to always be a list of strings and never
+    # a list of lists containing strings
+    # (happens when using multiple -s)
+    if len(args.snapshotkeys) > 0:
+        logging.debug("Converting snapshot keys to list of strings")
+        snapshotkeys = []
+        for argument in args.snapshotkeys:
+            for key in argument:
+                snapshotkeys.append(key)
+        args.snapshotkeys = snapshotkeys
+
     # args check
     if len(args.snapshotkeys) > 2:
-        logging.critical("ERROR: too many snapshotkeys given (max(-s) 2)")
+        logging.critical("ERROR: too many snapshotkeys given {} (max 2)".format(args.snapshotkeys))
         return
 
     try:
@@ -251,10 +262,10 @@ def main():
         return
 
     if os.geteuid() != 0:
-        logging.warning("Warning: Root privileges are expected.")
+        logging.warning("Warning: Root privileges are expected")
 
     if not Path(args.outdir).is_dir():
-        logging.critical("ERROR: Output directory does not exist.")
+        logging.critical("ERROR: Output directory does not exist")
         return
 
     # remove volume duplicates
@@ -303,7 +314,7 @@ def main():
             if len(args.snapshotkeys) == 1:
                 # snapshots found with same keyword
                 outfile = outfile+"-"+snapshot2.rsplit(
-                    args.snapshotkeys[0][0], 1)[1]
+                    args.snapshotkeys[0], 1)[1]
             # elif 0: # TODO reduce output string length if possible
             #        # for when two snapshot keys are given
             else:
