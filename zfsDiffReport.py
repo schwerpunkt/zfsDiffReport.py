@@ -7,6 +7,7 @@ import os
 from pwd import getpwnam
 import hashlib
 from pathlib import Path
+import re
 
 DESCRIPTION = """
 zfsDiffReport.py generates a report text file from the ZFS diff of a
@@ -72,6 +73,23 @@ def handleLogging(args):
         logging.basicConfig(level=logging.INFO, format=FORMAT)
 
 
+# Thanks to https://github.com/hungrywolf27 for that routine
+# https://github.com/schwerpunkt/zfsDiffReport.py/issues/6
+def decode_octal(encoded):
+    # Match b'\\0xxx'
+    for oct_char in (c for c in re.findall(b'\\\\0\d{3}', encoded)):
+        # Figured out through hours of trial and error:
+        # Strip out '\0' to leave b'xxx' of octal number
+        #    br'' means raw bytes (\ not treated as escape)
+        #    Note that it's impossible to create b'\' in Python;
+        #    can't end with a single backslash.
+        myoct = oct_char.replace(br'\0', b'')
+        # Convert this from octal to an integer
+        myint = int(myoct, 8)
+        encoded = encoded.replace(oct_char, bytes([myint]))
+    return encoded
+
+
 def getSnapshots(volume, snapshotkeys):
     logging.info("Get snapshot list for {}".format(volume))
     process = subprocess.Popen(
@@ -122,17 +140,10 @@ def getSortedDiffLines(snapshot1, snapshot2):
     process = subprocess.Popen(["zfs diff {} {}".format(
         snapshot1, snapshot2)], shell=True, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
-    difflines = stdout.decode("utf-8")
-
-    # TODO change this to proper decoding!
-    # https://unix.stackexchange.com/q/216312/
-    difflines = difflines.replace("\\0040", " ")
-    difflines = difflines.replace("\\0303\\0244", "ä")
-    difflines = difflines.replace("\\0303\\0204", "Ä")
-    difflines = difflines.replace("\\0303\\0266", "ö")
-    difflines = difflines.replace("\\0303\\0226", "Ö")
-    difflines = difflines.replace("\\0303\\0274", "ü")
-    difflines = difflines.replace("\\0303\\0234", "Ü")
+    
+    # decode octal values created by zfs diff
+    difflines = decode_octal(stdout)
+    difflines = difflines.decode("utf-8")
 
     difflines = difflines.splitlines()
 
